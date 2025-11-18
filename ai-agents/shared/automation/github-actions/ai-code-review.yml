@@ -1,0 +1,332 @@
+# AI-Powered Code Review using Claude AI
+# Place this file in: .github/workflows/ai-code-review.yml
+
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  ai-code-review:
+    name: AI-Powered Code Review
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore
+        continue-on-error: true
+        id: build
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD > changed_files.txt
+
+          echo "Changed files:"
+          cat changed_files.txt
+
+          # Count changed files
+          file_count=$(wc -l < changed_files.txt)
+          echo "file_count=$file_count" >> $GITHUB_OUTPUT
+
+      - name: Extract changed C# code
+        id: extract-code
+        run: |
+          echo "Extracting changed C# files..."
+
+          # Create output file
+          cat > code_for_review.txt << 'HEADER'
+          # Code Review Request
+
+          ## Pull Request Info
+          - **PR #**: ${{ github.event.pull_request.number }}
+          - **Title**: ${{ github.event.pull_request.title }}
+          - **Author**: ${{ github.event.pull_request.user.login }}
+          - **Branch**: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
+
+          ## Changed Files
+
+          HEADER
+
+          # Add each changed C# file
+          while IFS= read -r file; do
+            if [[ $file == *.cs ]]; then
+              echo "=== $file ===" >> code_for_review.txt
+              if [ -f "$file" ]; then
+                cat "$file" >> code_for_review.txt
+              fi
+              echo "" >> code_for_review.txt
+            fi
+          done < changed_files.txt
+
+          # Check file size (Claude has context limits)
+          file_size=$(wc -c < code_for_review.txt)
+          echo "file_size=$file_size" >> $GITHUB_OUTPUT
+
+          # If too large, summarize
+          if [ $file_size -gt 100000 ]; then
+            echo "⚠️ Code changes too large for single review" >> code_for_review.txt
+          fi
+
+      - name: Run static analysis
+        id: static-analysis
+        run: |
+          # Run dotnet analyzers
+          dotnet build -p:EnableNETAnalyzers=true -p:AnalysisLevel=latest -p:TreatWarningsAsErrors=false > analysis_output.txt 2>&1 || true
+
+          # Extract warnings and errors
+          grep -E "(warning|error) (CS|CA)[0-9]{4}" analysis_output.txt > issues.txt || echo "No issues found" > issues.txt
+
+          echo "Static analysis issues:"
+          cat issues.txt
+
+      - name: Setup Python for AI review script
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          pip install anthropic requests
+
+      - name: Run AI Code Review
+        id: ai-review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cat > ai_review.py << 'PYTHON_SCRIPT'
+          import os
+          import anthropic
+          import json
+
+          def run_ai_review():
+              client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+              # Read code to review
+              with open('code_for_review.txt', 'r') as f:
+                  code_content = f.read()
+
+              # Read static analysis issues
+              with open('issues.txt', 'r') as f:
+                  static_issues = f.read()
+
+              # Build review prompt
+              prompt = f"""You are an expert C# code reviewer specializing in ASP.NET Core applications.
+
+          Please review the following code changes and provide:
+
+          1. **Critical Issues** - Must fix before merge (security, bugs, breaking changes)
+          2. **High Priority** - Should fix (performance, maintainability)
+          3. **Medium Priority** - Consider fixing (code quality, best practices)
+          4. **Suggestions** - Nice to have (optimizations, improvements)
+
+          Focus on:
+          - SOLID principles violations
+          - Security vulnerabilities (OWASP Top 10)
+          - Performance issues (N+1 queries, memory leaks)
+          - Error handling gaps
+          - Code quality (Clean Code principles)
+          - ASP.NET Core best practices
+          - Entity Framework anti-patterns
+
+          ## Static Analysis Issues
+          {static_issues}
+
+          ## Code Changes
+          {code_content[:50000]}  # Limit to 50k chars
+
+          Provide output in this format:
+
+          ## 🔴 Critical Issues (Fix immediately)
+          [List with file:line references]
+
+          ## 🟠 High Priority (Should fix)
+          [List with file:line references]
+
+          ## 🟡 Medium Priority (Consider fixing)
+          [List with file:line references]
+
+          ## 💡 Suggestions
+          [List]
+
+          ## ✅ Positive Observations
+          [What's done well]
+
+          ## Summary
+          Overall assessment and recommendation (APPROVE / REQUEST CHANGES / COMMENT)
+          """
+
+              # Call Claude API
+              try:
+                  message = client.messages.create(
+                      model="claude-sonnet-4-20250514",
+                      max_tokens=4096,
+                      messages=[
+                          {"role": "user", "content": prompt}
+                      ]
+                  )
+
+                  review_content = message.content[0].text
+
+                  # Save review
+                  with open('ai_review_output.txt', 'w') as f:
+                      f.write(review_content)
+
+                  print("AI Review completed successfully")
+                  print(review_content)
+
+                  # Determine if there are critical issues
+                  if "🔴 Critical Issues" in review_content and "None" not in review_content.split("🔴 Critical Issues")[1].split("##")[0]:
+                      with open('review_status.txt', 'w') as f:
+                          f.write("REQUEST_CHANGES")
+                  elif "🟠 High Priority" in review_content and "None" not in review_content.split("🟠 High Priority")[1].split("##")[0]:
+                      with open('review_status.txt', 'w') as f:
+                          f.write("COMMENT")
+                  else:
+                      with open('review_status.txt', 'w') as f:
+                          f.write("APPROVE")
+
+              except Exception as e:
+                  print(f"Error calling Claude API: {e}")
+                  with open('ai_review_output.txt', 'w') as f:
+                      f.write(f"# AI Review Failed\n\nError: {str(e)}\n\nPlease review manually.")
+                  with open('review_status.txt', 'w') as f:
+                      f.write("COMMENT")
+
+          if __name__ == "__main__":
+              run_ai_review()
+          PYTHON_SCRIPT
+
+          python ai_review.py
+
+      - name: Read AI review output
+        id: read-review
+        run: |
+          if [ -f ai_review_output.txt ]; then
+            review=$(cat ai_review_output.txt)
+            # Escape for GitHub Actions
+            review="${review//'%'/'%25'}"
+            review="${review//$'\n'/'%0A'}"
+            review="${review//$'\r'/'%0D'}"
+            echo "review=$review" >> $GITHUB_OUTPUT
+
+            status=$(cat review_status.txt)
+            echo "status=$status" >> $GITHUB_OUTPUT
+          else
+            echo "review=AI review file not found" >> $GITHUB_OUTPUT
+            echo "status=COMMENT" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR with AI review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const review = `${{ steps.read-review.outputs.review }}`;
+            const fileCount = ${{ steps.changed-files.outputs.file_count }};
+            const buildStatus = '${{ steps.build.outcome }}';
+
+            const comment = `## 🤖 AI Code Review
+
+            **Build Status:** ${buildStatus === 'success' ? '✅ Success' : '❌ Failed'}
+            **Files Changed:** ${fileCount}
+            **Reviewed by:** Claude Sonnet 4.5
+
+            ---
+
+            ${review}
+
+            ---
+
+            <sub>💡 This is an automated review. Please also conduct manual code review.</sub>
+            `;
+
+            // Create comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Add review labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ steps.read-review.outputs.status }}';
+
+            let labels = ['ai-reviewed'];
+
+            if (status === 'REQUEST_CHANGES') {
+              labels.push('needs-changes');
+            } else if (status === 'APPROVE') {
+              labels.push('ai-approved');
+            }
+
+            await github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: labels
+            });
+
+      - name: Upload review artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: ai-review-artifacts
+          path: |
+            code_for_review.txt
+            ai_review_output.txt
+            issues.txt
+            analysis_output.txt
+
+      - name: Update PR status check
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const status = '${{ steps.read-review.outputs.status }}';
+
+            let state, description;
+
+            if (status === 'APPROVE') {
+              state = 'success';
+              description = '✅ AI review passed - no critical issues';
+            } else if (status === 'REQUEST_CHANGES') {
+              state = 'failure';
+              description = '❌ AI review found critical issues';
+            } else {
+              state = 'success'; // Don't block on comments
+              description = '⚠️ AI review has suggestions';
+            }
+
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: state,
+              description: description,
+              context: 'AI Code Review'
+            });

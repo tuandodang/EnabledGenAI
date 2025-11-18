@@ -1,0 +1,796 @@
+# .cursorrules for C# / ASP.NET Core Backend Development
+# Version: 2.0
+# Copy this file to your project root as .cursorrules
+
+################################################################################
+# PROJECT INFORMATION
+################################################################################
+
+language: C#
+framework: ASP.NET Core 8.0
+target_framework: net8.0
+orm: Entity Framework Core 8.0
+
+################################################################################
+# ARCHITECTURE
+################################################################################
+
+architecture: Clean Architecture (Layered)
+
+layers:
+  domain:
+    description: Enterprise business rules
+    location: Domain/
+    contains:
+      - Entities
+      - Domain Interfaces
+      - Domain Events
+    dependencies: None
+
+  application:
+    description: Application business rules
+    location: Application/
+    contains:
+      - DTOs
+      - Service Interfaces
+      - Service Implementations
+      - Validators
+      - Mappings
+    dependencies:
+      - Domain
+
+  infrastructure:
+    description: External concerns implementation
+    location: Infrastructure/
+    contains:
+      - Data Access (EF Core)
+      - Repositories
+      - External Service Clients
+    dependencies:
+      - Domain
+      - Application
+
+  api:
+    description: Entry point for web requests
+    location: API/
+    contains:
+      - Controllers
+      - Middleware
+      - Filters
+      - Configuration
+    dependencies:
+      - Application
+      - Infrastructure
+
+################################################################################
+# CODE STYLE & CONVENTIONS
+################################################################################
+
+naming_conventions:
+  classes: PascalCase
+  interfaces: PascalCase with "I" prefix (e.g., IProductService)
+  methods: PascalCase
+  public_properties: PascalCase
+  private_fields: _camelCase with underscore prefix
+  parameters: camelCase
+  local_variables: camelCase
+  constants: UPPER_CASE or PascalCase
+  async_methods: PascalCaseAsync suffix (e.g., GetByIdAsync)
+
+file_naming:
+  entities: PascalCase.cs (e.g., Product.cs)
+  interfaces: IPascalCase.cs (e.g., IProductService.cs)
+  dtos: PascalCaseDto.cs (e.g., ProductResponseDto.cs)
+  controllers: PascalCaseController.cs (e.g., ProductsController.cs)
+  tests: PascalCaseTests.cs (e.g., ProductServiceTests.cs)
+
+################################################################################
+# SOLID PRINCIPLES
+################################################################################
+
+solid_principles:
+  single_responsibility:
+    - Each class should have one reason to change
+    - Controllers handle HTTP, Services handle business logic
+    - Repositories handle data access
+
+  open_closed:
+    - Open for extension, closed for modification
+    - Use interfaces and dependency injection
+    - Extend through inheritance or composition
+
+  liskov_substitution:
+    - Derived classes must be substitutable for base classes
+    - Don't violate contracts in derived classes
+
+  interface_segregation:
+    - Many specific interfaces > one general interface
+    - Clients shouldn't depend on methods they don't use
+
+  dependency_inversion:
+    - Depend on abstractions, not concretions
+    - Use interfaces for all dependencies
+    - Register in DI container
+
+################################################################################
+# CLEAN CODE PRINCIPLES
+################################################################################
+
+clean_code:
+  methods:
+    max_lines: 20
+    max_parameters: 4
+    one_level_of_abstraction: true
+    descriptive_names: true
+
+  classes:
+    max_lines: 300
+    single_responsibility: true
+    cohesive: true
+
+  naming:
+    reveal_intent: true
+    avoid_abbreviations: true
+    use_pronounceable_names: true
+    use_searchable_names: true
+
+  comments:
+    explain_why_not_what: true
+    xml_documentation: required for public APIs
+    avoid_redundant: true
+    update_with_code: true
+
+  magic_numbers:
+    use_constants: true
+    use_enums: true for related values
+
+  error_handling:
+    dont_ignore_exceptions: true
+    use_specific_exceptions: true
+    provide_context: true
+
+################################################################################
+# DESIGN PATTERNS
+################################################################################
+
+patterns:
+  repository:
+    description: Abstract data access
+    usage: One repository per aggregate root
+    location: Infrastructure/Repositories
+    interface_location: Domain/Repositories
+    example: |
+      public interface IProductRepository
+      {
+          Task<Product?> GetByIdAsync(Guid id, CancellationToken ct);
+          Task<PagedResult<Product>> GetPagedAsync(QueryDto query, CancellationToken ct);
+          Task<Product> CreateAsync(Product product, CancellationToken ct);
+          Task<Product> UpdateAsync(Product product, CancellationToken ct);
+          Task DeleteAsync(Guid id, CancellationToken ct);
+      }
+
+  service:
+    description: Business logic layer
+    usage: One service per entity/aggregate
+    location: Application/Services
+    interface_location: Application/Interfaces
+    return_type: Result<T> for operations that can fail
+    example: |
+      public class ProductService : IProductService
+      {
+          private readonly IProductRepository _repository;
+          private readonly IMapper _mapper;
+          private readonly ILogger<ProductService> _logger;
+
+          public async Task<Result<ProductDto>> GetByIdAsync(Guid id, CancellationToken ct)
+          {
+              // Implementation
+          }
+      }
+
+  dto:
+    description: Data transfer objects
+    usage: Separate DTOs for Request and Response
+    location: Application/DTOs
+    use_records: true for immutability
+    validation: FluentValidation
+    example: |
+      public record CreateProductRequestDto
+      {
+          [Required]
+          public required string Name { get; init; }
+
+          [Range(0.01, 999999.99)]
+          public decimal Price { get; init; }
+      }
+
+  result:
+    description: Return type for operations
+    usage: Alternative to exceptions for expected failures
+    location: Domain/Common
+    example: |
+      public class Result<T>
+      {
+          public bool IsSuccess { get; }
+          public T? Data { get; }
+          public string? Error { get; }
+
+          public static Result<T> Success(T data);
+          public static Result<T> Failure(string error);
+      }
+
+  unit_of_work:
+    description: Group operations in a transaction
+    usage: Optional, DbContext already implements this
+    location: Infrastructure/Data
+
+################################################################################
+# ASYNC / AWAIT
+################################################################################
+
+async_await:
+  rules:
+    - Use async/await for all I/O operations
+    - Never use .Result or .Wait()
+    - Always pass CancellationToken to async methods
+    - Use ConfigureAwait(false) in library code
+    - Return Task or Task<T>, not void (except event handlers)
+
+  method_naming:
+    - Suffix async methods with "Async"
+    - GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync
+
+  cancellation:
+    - Accept CancellationToken parameter
+    - Default to CancellationToken.None
+    - Pass token to downstream async calls
+
+  example: |
+    public async Task<Result<ProductDto>> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var product = await _repository.GetByIdAsync(id, cancellationToken);
+        // ...
+    }
+
+################################################################################
+# ERROR HANDLING
+################################################################################
+
+error_handling:
+  exceptions:
+    use_for: Unexpected errors only
+    types:
+      - ArgumentException: Invalid arguments
+      - ArgumentNullException: Null arguments
+      - InvalidOperationException: Invalid state
+      - NotImplementedException: Not implemented
+    custom_exceptions: true for domain-specific errors
+    location: Domain/Exceptions
+
+  result_pattern:
+    use_for: Expected business logic failures
+    return: Result<T> or Result
+    example: |
+      if (product == null)
+      {
+          return Result<ProductDto>.Failure("Product not found");
+      }
+
+  logging:
+    - Log all exceptions with context
+    - Use structured logging (Serilog)
+    - Include correlation IDs
+    - Log levels:
+      - Debug: Detailed diagnostic info
+      - Information: General flow
+      - Warning: Abnormal but expected
+      - Error: Error events
+      - Critical: Failure scenarios
+
+  global_exception_handler:
+    location: API/Middleware/ExceptionHandlingMiddleware.cs
+    responsibilities:
+      - Catch unhandled exceptions
+      - Log with full context
+      - Return appropriate HTTP status
+      - Hide internal details from client
+
+################################################################################
+# DATABASE (Entity Framework Core)
+################################################################################
+
+entity_framework:
+  approach: Code-First
+
+  entities:
+    location: Domain/Entities
+    conventions:
+      - Guid Id property
+      - Required navigation properties
+      - Audit fields: CreatedAt, UpdatedAt, CreatedBy, UpdatedBy
+      - Soft delete: IsDeleted, DeletedAt
+    example: |
+      public class Product
+      {
+          public Guid Id { get; set; }
+
+          [Required]
+          [MaxLength(200)]
+          public required string Name { get; set; }
+
+          [Column(TypeName = "decimal(18,2)")]
+          public decimal Price { get; set; }
+
+          public Guid CategoryId { get; set; }
+          public Category Category { get; set; } = null!;
+
+          public DateTime CreatedAt { get; set; }
+          public DateTime? UpdatedAt { get; set; }
+          public bool IsDeleted { get; set; }
+      }
+
+  configuration:
+    approach: Separate configuration classes
+    location: Infrastructure/Data/Configurations
+    implement: IEntityTypeConfiguration<T>
+    example: |
+      public class ProductConfiguration : IEntityTypeConfiguration<Product>
+      {
+          public void Configure(EntityTypeBuilder<Product> builder)
+          {
+              builder.ToTable("Products");
+              builder.HasKey(p => p.Id);
+              builder.Property(p => p.Name).IsRequired().HasMaxLength(200);
+              builder.HasIndex(p => p.Name);
+              builder.HasQueryFilter(p => !p.IsDeleted);
+          }
+      }
+
+  migrations:
+    - Use migrations for schema changes
+    - Name migrations descriptively
+    - Review generated migration code
+    - Never edit applied migrations
+
+  query_optimization:
+    - Use Include/ThenInclude to prevent N+1
+    - Use AsNoTracking() for read-only queries
+    - Use projection (Select) instead of full entities
+    - Add indexes for frequently queried columns
+    - Implement pagination for lists
+
+  soft_delete:
+    - Use IsDeleted flag
+    - Implement global query filter
+    - Never hard delete (except for GDPR compliance)
+
+################################################################################
+# API DESIGN
+################################################################################
+
+api_design:
+  rest_conventions:
+    - GET: Retrieve resource(s)
+    - POST: Create resource
+    - PUT: Update resource (full)
+    - PATCH: Update resource (partial)
+    - DELETE: Delete resource
+
+  endpoints:
+    format: /api/v{version}/[controller]
+    examples:
+      - GET /api/v1/products - List all
+      - GET /api/v1/products/{id} - Get one
+      - POST /api/v1/products - Create
+      - PUT /api/v1/products/{id} - Update
+      - DELETE /api/v1/products/{id} - Delete
+
+  http_status_codes:
+    success:
+      - 200 OK: Successful GET, PUT, PATCH
+      - 201 Created: Successful POST
+      - 204 No Content: Successful DELETE
+    client_error:
+      - 400 Bad Request: Invalid request
+      - 401 Unauthorized: No auth
+      - 403 Forbidden: Insufficient permissions
+      - 404 Not Found: Resource not found
+      - 409 Conflict: Duplicate/conflict
+      - 422 Unprocessable Entity: Validation error
+    server_error:
+      - 500 Internal Server Error: Unexpected error
+
+  response_format:
+    wrapper: ApiResponse<T>
+    structure: |
+      {
+        "success": true,
+        "data": { ... },
+        "message": "Operation successful",
+        "errors": []
+      }
+
+  versioning:
+    approach: URL versioning (/api/v1/)
+    increment: Major version for breaking changes
+
+  documentation:
+    - XML comments on all public APIs
+    - Swagger/OpenAPI enabled
+    - Include examples
+    - Document error responses
+
+################################################################################
+# CONTROLLERS
+################################################################################
+
+controllers:
+  attributes:
+    required:
+      - [ApiController]
+      - [Route("api/v{version:apiVersion}/[controller]")]
+      - [Produces("application/json")]
+
+  dependency_injection:
+    - Inject services via constructor
+    - Don't inject repositories directly
+    - Keep controllers thin (orchestration only)
+
+  methods:
+    - Return ActionResult<T> or IActionResult
+    - Use [HttpGet], [HttpPost], etc. attributes
+    - Validate ModelState
+    - Handle CancellationToken
+
+  xml_documentation:
+    - <summary>, <param>, <returns>
+    - <response> for status codes
+    - Example codes: 200, 201, 400, 404, 500
+
+  example: |
+    [ApiController]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    public class ProductsController : ControllerBase
+    {
+        private readonly IProductService _service;
+
+        public ProductsController(IProductService service)
+        {
+            _service = service;
+        }
+
+        /// <summary>
+        /// Get product by ID
+        /// </summary>
+        /// <param name="id">Product ID</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Product details</returns>
+        /// <response code="200">Returns the product</response>
+        /// <response code="404">Product not found</response>
+        [HttpGet("{id:guid}")]
+        [ProducesResponseType(typeof(ApiResponse<ProductDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse), 404)]
+        public async Task<ActionResult<ApiResponse<ProductDto>>> GetById(
+            Guid id,
+            CancellationToken cancellationToken)
+        {
+            var result = await _service.GetByIdAsync(id, cancellationToken);
+
+            if (!result.IsSuccess)
+            {
+                return NotFound(ApiResponse.Fail(result.Error));
+            }
+
+            return Ok(ApiResponse<ProductDto>.Succeed(result.Data));
+        }
+    }
+
+################################################################################
+# VALIDATION
+################################################################################
+
+validation:
+  approach: FluentValidation
+  location: Application/Validators
+
+  dto_validation:
+    - Use Data Annotations for simple rules
+    - Use FluentValidation for complex rules
+    - Validate in service layer (defense in depth)
+
+  rules:
+    - Not null/empty
+    - String length
+    - Numeric ranges
+    - Regular expressions
+    - Custom business rules
+
+  example: |
+    public class CreateProductRequestValidator : AbstractValidator<CreateProductRequestDto>
+    {
+        public CreateProductRequestValidator()
+        {
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("Name is required")
+                .Length(3, 200).WithMessage("Name must be 3-200 characters");
+
+            RuleFor(x => x.Price)
+                .GreaterThan(0).WithMessage("Price must be greater than 0");
+        }
+    }
+
+################################################################################
+# AUTHENTICATION & AUTHORIZATION
+################################################################################
+
+authentication:
+  mechanism: JWT Bearer Tokens
+  location: API/Configuration
+
+  controller_attributes:
+    - [Authorize] - Requires authentication
+    - [Authorize(Roles = "Admin")] - Role-based
+    - [Authorize(Policy = "PolicyName")] - Policy-based
+    - [AllowAnonymous] - No authentication required
+
+  token_validation:
+    - Validate issuer
+    - Validate audience
+    - Validate lifetime
+    - Validate signature
+
+authorization:
+  approaches:
+    - Role-based: [Authorize(Roles = "Admin,Manager")]
+    - Policy-based: [Authorize(Policy = "CanEditProduct")]
+    - Resource-based: Check ownership in service layer
+
+################################################################################
+# TESTING
+################################################################################
+
+testing:
+  framework: xUnit
+  mocking: Moq
+  assertions: FluentAssertions
+
+  patterns:
+    aaa:
+      - Arrange: Set up test data and mocks
+      - Act: Execute the method under test
+      - Assert: Verify the results
+
+  naming_convention: MethodName_Scenario_ExpectedResult
+
+  coverage_targets:
+    line: 85%
+    branch: 80%
+    method: 100% of public methods
+
+  test_types:
+    unit:
+      location: Tests/Unit
+      scope: Single method/class
+      dependencies: Mocked
+      speed: Fast (<100ms)
+
+    integration:
+      location: Tests/Integration
+      scope: Multiple components
+      dependencies: Real (InMemory DB)
+      speed: Slower
+
+  example: |
+    public class ProductServiceTests
+    {
+        private readonly Mock<IProductRepository> _mockRepository;
+        private readonly Mock<IMapper> _mockMapper;
+        private readonly ProductService _sut; // System Under Test
+
+        public ProductServiceTests()
+        {
+            _mockRepository = new Mock<IProductRepository>();
+            _mockMapper = new Mock<IMapper>();
+            _sut = new ProductService(_mockRepository.Object, _mockMapper.Object);
+        }
+
+        [Fact]
+        public async Task GetByIdAsync_ValidId_ReturnsProduct()
+        {
+            // Arrange
+            var productId = Guid.NewGuid();
+            var product = new Product { Id = productId, Name = "Test" };
+            _mockRepository.Setup(x => x.GetByIdAsync(productId, default))
+                .ReturnsAsync(product);
+
+            // Act
+            var result = await _sut.GetByIdAsync(productId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.IsSuccess.Should().BeTrue();
+            result.Data!.Id.Should().Be(productId);
+        }
+    }
+
+################################################################################
+# LOGGING
+################################################################################
+
+logging:
+  framework: Serilog
+
+  structured_logging:
+    - Use message templates
+    - Include context properties
+    - Use correlation IDs
+
+  log_levels:
+    debug: Detailed diagnostic information
+    information: General application flow
+    warning: Abnormal or unexpected events
+    error: Error events
+    critical: Critical failure scenarios
+
+  what_to_log:
+    - Method entry/exit (Debug level)
+    - Important business events (Information)
+    - Validation failures (Warning)
+    - Exceptions (Error/Critical)
+    - Performance metrics (Information)
+
+  example: |
+    _logger.LogInformation("Creating product {ProductName}", productName);
+    _logger.LogWarning("Product {ProductId} not found", productId);
+    _logger.LogError(ex, "Error creating product {ProductId}", productId);
+
+################################################################################
+# PERFORMANCE
+################################################################################
+
+performance:
+  database:
+    - Use pagination for lists
+    - Implement caching (Redis)
+    - Optimize queries (avoid N+1)
+    - Use AsNoTracking for read-only
+    - Add appropriate indexes
+
+  api:
+    - Response compression
+    - Output caching
+    - CDN for static files
+    - Rate limiting
+
+  code:
+    - Use async/await
+    - Avoid premature optimization
+    - Profile before optimizing
+    - Benchmark critical paths
+
+################################################################################
+# SECURITY
+################################################################################
+
+security:
+  input_validation:
+    - Validate all inputs
+    - Use parameterized queries (EF Core default)
+    - Sanitize user input
+    - Validate file uploads
+
+  data_protection:
+    - Encrypt sensitive data at rest
+    - Use HTTPS only
+    - Don't log sensitive data
+    - Use Data Protection API for tokens
+
+  secrets_management:
+    development: User Secrets
+    production: Azure Key Vault or similar
+    never: Hardcode in code or config
+
+  common_vulnerabilities:
+    - SQL Injection: Use EF Core parameterized queries
+    - XSS: Validate and encode output
+    - CSRF: Use anti-forgery tokens
+    - Open Redirect: Validate redirect URLs
+    - Sensitive Data Exposure: Don't log/return secrets
+
+################################################################################
+# DEPENDENCIES
+################################################################################
+
+dependencies:
+  preferred:
+    - Entity Framework Core: ORM
+    - AutoMapper: Object mapping
+    - FluentValidation: Validation
+    - MediatR: CQRS/mediator pattern (optional)
+    - Serilog: Structured logging
+    - xUnit: Unit testing
+    - Moq: Mocking
+    - FluentAssertions: Assertions
+
+  avoid:
+    - Reflection: Performance overhead
+    - Dynamic types: Type safety
+    - var: When type is not obvious
+
+################################################################################
+# CODE GENERATION RULES
+################################################################################
+
+code_generation:
+  requirements:
+    - Follow all above conventions
+    - Include error handling
+    - Add XML comments
+    - Include validation
+    - Use async/await
+    - Implement logging
+    - Return proper HTTP status codes
+    - Include unit tests
+    - No TODOs in generated code
+    - Compilable, production-ready code
+
+  do_not:
+    - Skip error handling
+    - Omit validation
+    - Use synchronous I/O
+    - Hardcode configuration
+    - Ignore cancellation tokens
+    - Generate incomplete code
+    - Add placeholder comments
+
+################################################################################
+# EXAMPLE CODE TEMPLATE
+################################################################################
+
+example_service_method: |
+  /// <summary>
+  /// Gets a product by ID
+  /// </summary>
+  /// <param name="id">The product ID</param>
+  /// <param name="cancellationToken">Cancellation token</param>
+  /// <returns>The product if found</returns>
+  /// <exception cref="ArgumentException">If ID is empty</exception>
+  public async Task<Result<ProductResponseDto>> GetByIdAsync(
+      Guid id,
+      CancellationToken cancellationToken = default)
+  {
+      if (id == Guid.Empty)
+      {
+          throw new ArgumentException("ID cannot be empty", nameof(id));
+      }
+
+      try
+      {
+          _logger.LogDebug("Getting product {ProductId}", id);
+
+          var product = await _repository.GetByIdAsync(id, cancellationToken);
+
+          if (product == null)
+          {
+              _logger.LogWarning("Product {ProductId} not found", id);
+              return Result<ProductResponseDto>.Failure("Product not found");
+          }
+
+          var dto = _mapper.Map<ProductResponseDto>(product);
+
+          _logger.LogInformation("Successfully retrieved product {ProductId}", id);
+
+          return Result<ProductResponseDto>.Success(dto);
+      }
+      catch (Exception ex)
+      {
+          _logger.LogError(ex, "Error getting product {ProductId}", id);
+          return Result<ProductResponseDto>.Failure("An error occurred while retrieving the product");
+      }
+  }
+
+################################################################################
+# END OF .cursorrules
+################################################################################
