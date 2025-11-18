@@ -1,0 +1,136 @@
+agent:
+  id: "agent-15"
+  name: "Unit Test Agent"
+  version: "1.0"
+  category: "development"
+
+description:
+  short: "Generates comprehensive unit tests"
+  long: |
+    QA automation specialist agent that generates comprehensive unit tests
+    with high coverage including test fixtures, mocks, edge cases, and
+    integration test scaffolding for multiple testing frameworks.
+
+tools:
+  primary: "cursor-ai"
+  supported:
+    - "cursor-ai"
+    - "github-copilot"
+    - "claude-ai"
+
+model:
+  recommended: "claude-sonnet-4.5"
+  temperature: 0.2
+  mode: "composer"
+
+supported_frameworks:
+  java:
+    - "junit-5"
+    - "mockito"
+    - "assertj"
+    - "spring-boot-test"
+  javascript:
+    - "jest"
+    - "mocha"
+    - "vitest"
+    - "sinon"
+  python:
+    - "pytest"
+    - "unittest"
+    - "mock"
+    - "faker"
+  go:
+    - "testing"
+    - "testify"
+    - "gomock"
+
+inputs:
+  required:
+    - source_code
+  optional:
+    - api_specifications
+    - acceptance_criteria
+    - business_requirements
+    - edge_cases_documentation
+
+outputs:
+  primary:
+    - unit_test_classes
+    - test_fixtures
+    - mocks_stubs
+    - edge_case_tests
+  secondary:
+    - integration_test_scaffolding
+    - test_data_builders
+    - test_utilities
+
+test_coverage_goals:
+  unit_tests:
+    - "all_public_methods"
+    - "all_business_logic"
+    - "all_error_paths"
+    - "all_edge_cases"
+  test_types:
+    - "positive_tests"
+    - "negative_tests"
+    - "boundary_tests"
+    - "null_tests"
+    - "exception_tests"
+
+metrics:
+  time_savings:
+    manual: "30 hours"
+    with_agent: "3 hours"
+    percentage: "90-95%"
+  quality:
+    code_coverage: ">80%"
+    test_pass_rate: "100%"
+    test_speed: "<100ms"
+
+triggers:
+  - "Code implementation complete"
+  - "Test coverage improvement needed"
+  - "TDD implementation"
+  - "Regression test suite creation"
+  - "Refactoring with test safety"
+  - "Bug fix requiring tests"
+
+integration:
+  inputs_from:
+    - agent_13_implementation
+    - agent_12_api_design
+    - agent_06_requirement_analysis
+  outputs_to:
+    - ci_cd_pipeline
+    - code_coverage_tools
+    - test_reports
+    - quality_dashboards
+
+test_quality_standards:
+  - "AAA pattern (Arrange-Act-Assert)"
+  - "Descriptive test names"
+  - "Test independence"
+  - "Fast execution (<100ms)"
+  - "No flaky tests"
+  - "Clear assertions"
+
+best_practices:
+  do:
+    - "Test all public methods"
+    - "Include edge cases"
+    - "Mock external dependencies"
+    - "Use test data builders"
+    - "Follow AAA pattern"
+    - "Write independent tests"
+  dont:
+    - "Test private methods"
+    - "Create test dependencies"
+    - "Use shared mutable state"
+    - "Skip edge cases"
+    - "Write slow tests"
+
+version_history:
+  - version: "1.0"
+    date: "2024-11-18"
+    changes: "Initial agent specification"
+    author: "Tuan Do"

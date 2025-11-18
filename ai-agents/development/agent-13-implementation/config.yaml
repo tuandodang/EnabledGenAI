@@ -1,0 +1,121 @@
+agent:
+  id: "agent-13"
+  name: "Implementation Agent"
+  version: "1.0"
+  category: "development"
+
+description:
+  short: "Generates production-ready backend code"
+  long: |
+    Senior backend developer agent that generates complete, production-ready
+    code including controllers, services, repositories, DTOs, and entity models
+    based on API designs and technical specifications.
+
+tools:
+  primary: "cursor-ai"
+  supported:
+    - "cursor-ai"
+    - "github-copilot"
+    - "claude-ai"
+
+model:
+  recommended: "claude-sonnet-4.5"
+  temperature: 0.2
+  mode: "composer"
+
+supported_frameworks:
+  java:
+    - "spring-boot-3.x"
+    - "spring-boot-2.x"
+  nodejs:
+    - "express"
+    - "nestjs"
+  python:
+    - "fastapi"
+    - "django"
+    - "flask"
+  go:
+    - "gin"
+    - "echo"
+    - "fiber"
+
+inputs:
+  required:
+    - api_design_document
+    - database_schema
+  optional:
+    - technical_requirements
+    - architecture_guidelines
+    - coding_standards
+
+outputs:
+  primary:
+    - controllers_handlers
+    - service_layer
+    - repository_layer
+    - dtos
+    - entity_models
+    - middleware
+  secondary:
+    - configuration_files
+    - constants
+    - utilities
+
+metrics:
+  time_savings:
+    manual: "60 hours"
+    with_agent: "8 hours"
+    percentage: "85-90%"
+  quality:
+    compilation_success: "100%"
+    code_quality_score: ">80%"
+    api_completeness: "100%"
+
+triggers:
+  - "API design approved"
+  - "Feature implementation needed"
+  - "Scaffolding new microservice"
+  - "CRUD operations required"
+  - "New endpoints addition"
+  - "Code refactoring"
+
+integration:
+  inputs_from:
+    - agent_12_api_design
+    - agent_06_requirement_analysis
+    - database_team
+    - devops
+  outputs_to:
+    - agent_14_code_review
+    - agent_15_unit_testing
+    - version_control
+    - ci_cd_pipeline
+
+best_practices:
+  do:
+    - "Use DTOs (never expose entities)"
+    - "Add input validation"
+    - "Implement proper error handling"
+    - "Follow framework conventions"
+    - "Use dependency injection"
+    - "Add logging appropriately"
+  dont:
+    - "Leave TODOs in production code"
+    - "Skip error handling"
+    - "Forget validation"
+    - "Ignore security best practices"
+    - "Mix concerns across layers"
+
+code_quality_standards:
+  - "Clean code principles"
+  - "SOLID principles"
+  - "DRY (Don't Repeat Yourself)"
+  - "Proper separation of concerns"
+  - "Testable code (dependency injection)"
+  - "Consistent naming conventions"
+
+version_history:
+  - version: "1.0"
+    date: "2024-11-18"
+    changes: "Initial agent specification"
+    author: "Tuan Do"

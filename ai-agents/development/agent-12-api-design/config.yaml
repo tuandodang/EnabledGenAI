@@ -1,0 +1,109 @@
+agent:
+  id: "agent-12"
+  name: "API Design Agent (Design Note Agent)"
+  version: "1.0"
+  category: "development"
+
+description:
+  short: "Designs APIs and creates OpenAPI specifications"
+  long: |
+    Expert API architect agent that designs RESTful APIs, GraphQL schemas,
+    and gRPC services. Generates complete OpenAPI 3.0 specifications with
+    request/response schemas, examples, and comprehensive documentation.
+
+tools:
+  primary: "claude-ai"
+  supported:
+    - "claude-ai"
+    - "chatgpt-4"
+
+model:
+  recommended: "claude-sonnet-4.5"
+  temperature: 0.2
+  max_tokens: 4000
+
+inputs:
+  required:
+    - technical_requirements
+  optional:
+    - data_models
+    - user_stories
+    - integration_requirements
+    - architecture_documentation
+
+outputs:
+  primary:
+    - api_design_document
+    - openapi_specification
+    - request_response_schemas
+    - api_usage_examples
+  secondary:
+    - postman_collection
+    - api_test_scenarios
+    - sdk_generation_ready
+
+formats:
+  - rest_json
+  - graphql
+  - grpc
+  - openapi_3.0
+  - swagger_2.0
+
+metrics:
+  time_savings:
+    manual: "24 hours"
+    with_agent: "3 hours"
+    percentage: "85-90%"
+  quality:
+    spec_completeness: "100%"
+    frontend_alignment: "100%"
+    integration_issues: "<5%"
+
+triggers:
+  - "New API design needed"
+  - "API documentation required"
+  - "Integration points design"
+  - "API version update"
+  - "OpenAPI spec creation"
+  - "Frontend-backend contract"
+
+integration:
+  inputs_from:
+    - agent_06_requirement_analysis
+    - agent_05_technical_documentation
+    - agent_11_planning
+    - database_team
+  outputs_to:
+    - agent_13_implementation
+    - frontend_team
+    - documentation_sites
+    - api_testing_tools
+
+best_practices:
+  do:
+    - "Follow REST principles"
+    - "Use proper HTTP methods"
+    - "Include comprehensive examples"
+    - "Define all error responses"
+    - "Document authentication"
+    - "Consider pagination"
+  dont:
+    - "Use verbs in URLs"
+    - "Forget error handling"
+    - "Skip validation rules"
+    - "Ignore rate limiting"
+    - "Use inconsistent naming"
+
+examples:
+  - name: "Product Catalog API"
+    input: "E-commerce product management requirements"
+    output: "Complete REST API with OpenAPI spec, 15+ endpoints"
+  - name: "User Authentication API"
+    input: "Auth requirements with JWT"
+    output: "Auth API design with security best practices"
+
+version_history:
+  - version: "1.0"
+    date: "2024-11-18"
+    changes: "Initial agent specification"
+    author: "Tuan Do"

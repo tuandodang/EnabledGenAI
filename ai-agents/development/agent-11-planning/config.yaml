@@ -1,0 +1,93 @@
+agent:
+  id: "agent-11"
+  name: "Planning Agent"
+  version: "1.0"
+  category: "development"
+
+description:
+  short: "Creates sprint plans and task breakdowns"
+  long: |
+    Scrum Master agent that generates comprehensive sprint plans, development
+    roadmaps, task breakdowns, and effort estimates based on technical
+    requirements and team capacity.
+
+tools:
+  primary: "claude-ai"
+  supported:
+    - "claude-ai"
+    - "chatgpt-4"
+
+model:
+  recommended: "claude-sonnet-4.5"
+  temperature: 0.3
+  max_tokens: 4000
+
+inputs:
+  required:
+    - technical_requirements
+    - team_information
+  optional:
+    - timeline_constraints
+    - dependencies
+    - priorities
+    - historical_velocity
+
+outputs:
+  primary:
+    - sprint_plans
+    - development_roadmap
+    - task_breakdown
+    - effort_estimates
+  secondary:
+    - resource_allocation
+    - risk_assessment
+    - dependency_map
+
+metrics:
+  time_savings:
+    manual: "12 hours"
+    with_agent: "2 hours"
+    percentage: "75-85%"
+  quality:
+    sprint_completion: ">85%"
+    estimate_accuracy: "±20%"
+    team_satisfaction: ">80%"
+
+triggers:
+  - "New sprint planning session"
+  - "Project timeline estimation needed"
+  - "Product roadmap creation"
+  - "Epic breakdown required"
+  - "Resource planning"
+  - "Release planning"
+
+integration:
+  inputs_from:
+    - agent_06_requirement_analysis
+    - agent_05_technical_documentation
+    - product_owners
+    - team_leads
+  outputs_to:
+    - project_management_tools
+    - team_members
+    - stakeholders
+    - agent_12_api_design
+
+best_practices:
+  do:
+    - "Consider team capacity realistically"
+    - "Account for meetings overhead"
+    - "Include buffer for unknowns"
+    - "Break large stories down"
+    - "Use historical velocity"
+  dont:
+    - "Over-commit the team"
+    - "Forget about tech debt"
+    - "Ignore dependencies"
+    - "Skip risk assessment"
+
+version_history:
+  - version: "1.0"
+    date: "2024-11-18"
+    changes: "Initial agent specification"
+    author: "Tuan Do"

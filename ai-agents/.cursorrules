@@ -1,0 +1,407 @@
+# Cursor AI Rules for Backend Development with AI Agents
+
+## Project Context
+
+This is a backend development project using AI agents for automation.
+Use these rules to generate consistent, high-quality code.
+
+## General Coding Standards
+
+### Code Quality
+- Follow clean code principles
+- Apply SOLID principles
+- Keep functions focused and small (<30 lines ideally)
+- Use meaningful variable and function names
+- Avoid code duplication (DRY principle)
+- Write self-documenting code (comments explain "why", not "what")
+
+### Architecture
+- Use layered architecture (Controller → Service → Repository)
+- Keep concerns separated
+- Use dependency injection
+- Never mix business logic in controllers
+- Keep repositories focused on data access only
+
+## Language-Specific Rules
+
+### Java/Spring Boot
+
+**Framework Version:**
+- Java 17+
+- Spring Boot 3.x
+- Spring Data JPA
+- Spring Security
+
+**Code Style:**
+- Use constructor injection (not @Autowired on fields)
+- Use Lombok to reduce boilerplate (@Data, @Builder, @RequiredArgsConstructor)
+- Always use DTOs for API layer (never expose entities)
+- Use MapStruct for entity/DTO mapping
+- Add validation annotations on request DTOs (@NotNull, @NotBlank, @Size, etc.)
+
+**Naming Conventions:**
+- Controllers: `[Resource]Controller.java` (e.g., ProductController.java)
+- Services: `[Resource]Service.java` and `[Resource]ServiceImpl.java`
+- Repositories: `[Resource]Repository.java`
+- Entities: `[Resource].java` (e.g., Product.java)
+- DTOs: `[Resource]RequestDTO.java`, `[Resource]ResponseDTO.java`
+
+**Example Structure:**
+```java
+// Controller
+@RestController
+@RequestMapping("/api/v1/products")
+@RequiredArgsConstructor
+public class ProductController {
+    private final ProductService productService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> getProduct(@PathVariable UUID id) {
+        return ResponseEntity.ok(productService.getProductById(id));
+    }
+}
+
+// Service
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class ProductServiceImpl implements ProductService {
+    private final ProductRepository productRepository;
+    private final ProductMapper productMapper;
+
+    @Override
+    public ProductResponseDTO getProductById(UUID id) {
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        return productMapper.toResponseDTO(product);
+    }
+}
+
+// Entity
+@Entity
+@Table(name = "products")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal price;
+}
+```
+
+### Node.js/Express/TypeScript
+
+**Framework:**
+- Node.js 18+
+- Express 4.x
+- TypeScript (strict mode)
+- Prisma or TypeORM
+
+**Code Style:**
+- Use async/await (not callbacks or raw promises)
+- Use TypeScript strict mode
+- Define interfaces for all DTOs
+- Use middleware for cross-cutting concerns
+- Handle all errors with error handling middleware
+
+**Naming Conventions:**
+- Routes: `[resource].routes.ts`
+- Controllers: `[resource].controller.ts`
+- Services: `[resource].service.ts`
+- DTOs: `[resource].dto.ts`
+- Interfaces: `I[Name]` or `[Name]Interface`
+
+**Example Structure:**
+```typescript
+// Controller
+export class ProductController {
+  constructor(private productService: ProductService) {}
+
+  async getProduct(req: Request, res: Response, next: NextFunction) {
+    try {
+      const product = await this.productService.getProductById(req.params.id);
+      res.json(product);
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+// Service
+export class ProductService {
+  constructor(private productRepository: ProductRepository) {}
+
+  async getProductById(id: string): Promise<ProductResponseDTO> {
+    const product = await this.productRepository.findById(id);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    return this.toResponseDTO(product);
+  }
+}
+```
+
+### Python/FastAPI
+
+**Framework:**
+- Python 3.10+
+- FastAPI
+- SQLAlchemy or Prisma
+- Pydantic
+
+**Code Style:**
+- Use type hints everywhere
+- Use Pydantic models for request/response validation
+- Use dependency injection for services
+- Use async/await for I/O operations
+- Follow PEP 8 style guide
+
+**Naming Conventions:**
+- Files: `snake_case.py`
+- Classes: `PascalCase`
+- Functions: `snake_case`
+- Constants: `UPPER_SNAKE_CASE`
+
+**Example Structure:**
+```python
+# Router
+@router.get("/products/{product_id}", response_model=ProductResponse)
+async def get_product(
+    product_id: UUID,
+    service: ProductService = Depends(get_product_service)
+):
+    return await service.get_product_by_id(product_id)
+
+# Service
+class ProductService:
+    def __init__(self, repository: ProductRepository):
+        self.repository = repository
+
+    async def get_product_by_id(self, product_id: UUID) -> ProductResponse:
+        product = await self.repository.find_by_id(product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        return ProductResponse.from_orm(product)
+
+# Model (Pydantic)
+class ProductResponse(BaseModel):
+    id: UUID
+    name: str
+    price: Decimal
+
+    class Config:
+        orm_mode = True
+```
+
+## API Design Standards
+
+### REST API Conventions
+- Use plural nouns for resources (`/products`, not `/product`)
+- Use proper HTTP methods (GET, POST, PUT, PATCH, DELETE)
+- Use proper HTTP status codes (200, 201, 400, 401, 403, 404, 500)
+- Version APIs in URL (`/api/v1/products`)
+- Use hyphens for multi-word resources (`/order-items`, not `/orderItems`)
+
+### Request/Response Format
+- Always return JSON
+- Use consistent error format
+- Include pagination for lists
+- Use ISO 8601 for dates
+- Use UUID for IDs
+
+**Error Response Format:**
+```json
+{
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "Product not found with id: 123",
+    "details": []
+  }
+}
+```
+
+## Database Standards
+
+### Schema Design
+- Use UUIDs for primary keys
+- Include audit fields (createdAt, updatedAt, createdBy, updatedBy)
+- Use proper indexes on frequently queried fields
+- Use foreign key constraints
+- Use NOT NULL where appropriate
+
+### Queries
+- Avoid N+1 query problems (use eager loading/joins)
+- Use parameterized queries (never string concatenation)
+- Add indexes for foreign keys and frequently queried columns
+- Use connection pooling
+- Use transactions for multi-step operations
+
+## Security Standards
+
+### Input Validation
+- Validate all user inputs
+- Use validation libraries (Bean Validation, class-validator, Pydantic)
+- Sanitize inputs to prevent injection attacks
+- Validate data types, formats, ranges
+
+### Authentication & Authorization
+- Use JWT tokens or session-based auth
+- Implement proper role-based access control (RBAC)
+- Never store passwords in plain text (use bcrypt, Argon2)
+- Implement proper session management
+
+### Data Protection
+- Use HTTPS for all APIs
+- Encrypt sensitive data at rest
+- Never log sensitive data (passwords, tokens, credit cards)
+- Implement rate limiting
+- Use CORS properly
+
+## Testing Standards
+
+### Unit Tests
+- Test all public methods
+- Use AAA pattern (Arrange, Act, Assert)
+- Mock external dependencies
+- Test happy path and error cases
+- Test edge cases and boundary values
+- Aim for >80% code coverage
+
+### Test Naming
+- Use descriptive test names
+- Format: `should_ExpectedBehavior_When_StateUnderTest`
+- Example: `shouldReturnProduct_WhenValidIdProvided`
+
+## Error Handling
+
+### Exception Handling
+- Use custom exceptions for business errors
+- Catch specific exceptions (not generic Exception)
+- Use global exception handler for consistency
+- Log errors with appropriate levels
+- Return user-friendly error messages (don't expose stack traces)
+
+### Logging
+- Use appropriate log levels (DEBUG, INFO, WARN, ERROR)
+- Log errors with context
+- Never log sensitive data
+- Use structured logging (JSON format)
+- Include correlation IDs for request tracing
+
+## Performance Standards
+
+### General
+- Avoid premature optimization
+- Use caching where appropriate (Redis, in-memory)
+- Implement pagination for large datasets
+- Use async operations for I/O
+- Profile before optimizing
+
+### Database
+- Use indexes appropriately
+- Avoid SELECT * (select only needed columns)
+- Use database connection pooling
+- Optimize N+1 queries
+- Use database transactions appropriately
+
+## Documentation Standards
+
+### Code Documentation
+- Add JavaDoc/JSDoc/docstrings for public APIs
+- Explain complex business logic
+- Document assumptions and constraints
+- Keep documentation up to date with code
+
+### API Documentation
+- Use OpenAPI/Swagger for REST APIs
+- Include request/response examples
+- Document all error codes
+- Keep API docs updated
+
+## Git Commit Standards
+
+### Commit Messages
+- Use conventional commits format
+- Format: `type(scope): description`
+- Types: feat, fix, docs, refactor, test, chore
+- Examples:
+  - `feat(product): add product search endpoint`
+  - `fix(auth): resolve token expiration issue`
+  - `docs(api): update OpenAPI specification`
+
+## Code Generation Instructions
+
+When generating code:
+
+1. **Always include:**
+   - Proper imports
+   - Type annotations (if language supports)
+   - Input validation
+   - Error handling
+   - Logging statements
+   - Documentation comments
+
+2. **Never:**
+   - Leave TODO comments in production code
+   - Hardcode values (use configuration)
+   - Expose sensitive information
+   - Skip error handling
+   - Ignore security best practices
+
+3. **Structure:**
+   - Follow the layered architecture
+   - Keep classes focused (Single Responsibility)
+   - Use dependency injection
+   - Separate concerns
+
+4. **Quality:**
+   - Write clean, readable code
+   - Follow language-specific conventions
+   - Add meaningful variable names
+   - Keep functions small and focused
+
+## When Generating Tests
+
+1. **Coverage:**
+   - Test all public methods
+   - Include success and failure cases
+   - Test edge cases and boundaries
+   - Mock external dependencies
+
+2. **Quality:**
+   - Use descriptive test names
+   - Follow AAA pattern
+   - Make tests independent
+   - Keep tests fast
+
+3. **Structure:**
+   - Group related tests
+   - Use setup/teardown methods
+   - Create test data builders
+   - Use parameterized tests where appropriate
+
+## Additional Notes
+
+- **Prefer composition over inheritance**
+- **Keep dependencies minimal and up to date**
+- **Use environment variables for configuration**
+- **Implement health check endpoints**
+- **Use proper HTTP status codes**
+- **Implement request ID tracking for debugging**
+- **Add request/response logging in development**
+- **Use DTOs to decouple API from domain models**
+
+---
+
+**These rules ensure consistent, high-quality, secure, and maintainable code generation.**
+
+Last updated: 2024-11-18
+Version: 1.0

@@ -1,0 +1,93 @@
+agent:
+  id: "agent-07"
+  name: "Drawing Agent"
+  version: "1.0"
+  category: "architecture"
+
+description:
+  short: "Generates technical diagrams automatically"
+  long: |
+    Specialist agent that creates C4 diagrams, UML diagrams, ERDs, flowcharts,
+    and infrastructure diagrams in Mermaid or PlantUML format from architecture
+    specifications and design documents.
+
+tools:
+  primary: "claude-ai"
+  supported:
+    - "claude-ai"
+    - "chatgpt-4"
+
+model:
+  recommended: "claude-sonnet-4.5"
+  temperature: 0.3
+  max_tokens: 4000
+
+outputs:
+  formats:
+    - mermaid
+    - plantuml
+    - graphviz
+  diagram_types:
+    - c4_context
+    - c4_container
+    - c4_component
+    - class_diagram
+    - sequence_diagram
+    - erd
+    - flowchart
+    - deployment_diagram
+
+inputs:
+  required:
+    - architecture_documentation
+  optional:
+    - technical_requirements
+    - design_specifications
+    - data_models
+
+metrics:
+  time_savings:
+    manual: "8 hours"
+    with_agent: "1 hour"
+    percentage: "90-95%"
+  quality:
+    accuracy: "100%"
+    render_success: "100%"
+    stakeholder_comprehension: ">90%"
+
+triggers:
+  - "Architecture documentation complete"
+  - "Visual representation needed"
+  - "Database schema designed"
+  - "API workflows need illustration"
+  - "Presentation preparation"
+  - "Team onboarding materials"
+
+integration:
+  inputs_from:
+    - agent_05_technical_documentation
+    - agent_06_requirement_analysis
+    - agent_12_api_design
+  outputs_to:
+    - documentation_repos
+    - presentations
+    - team_wikis
+
+best_practices:
+  do:
+    - "Use Mermaid for GitHub integration"
+    - "Test diagram rendering"
+    - "Keep diagrams focused"
+    - "Use consistent notation"
+    - "Add legends when needed"
+  dont:
+    - "Overcomplicate diagrams"
+    - "Mix diagram types"
+    - "Forget to test rendering"
+    - "Skip labels"
+
+version_history:
+  - version: "1.0"
+    date: "2024-11-18"
+    changes: "Initial agent specification"
+    author: "Tuan Do"

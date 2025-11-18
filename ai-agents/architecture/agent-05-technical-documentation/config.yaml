@@ -1,0 +1,106 @@
+agent:
+  id: "agent-05"
+  name: "Technical Documentation Agent"
+  version: "1.0"
+  category: "architecture"
+
+description:
+  short: "Creates system architecture documentation and ADRs"
+  long: |
+    Expert software architect agent that generates comprehensive architecture
+    documentation including system design, C4 diagrams, ADRs, and tech stack
+    specifications based on business and technical requirements.
+
+tools:
+  primary: "claude-ai"
+  supported:
+    - "claude-ai"
+    - "chatgpt-4"
+
+model:
+  recommended: "claude-sonnet-4.5"
+  temperature: 0.3
+  max_tokens: 4000
+
+inputs:
+  required:
+    - business_requirements
+    - system_constraints
+  optional:
+    - technical_requirements
+    - technology_preferences
+    - stakeholder_concerns
+    - existing_system_context
+
+outputs:
+  primary:
+    - architecture_document
+    - adr_records
+    - c4_diagram_specs
+    - tech_stack_specification
+  secondary:
+    - risk_assessment
+    - migration_strategy
+    - cost_estimates
+
+metrics:
+  time_savings:
+    manual: "30 hours"
+    with_agent: "3 hours"
+    percentage: "80-90%"
+  quality:
+    completeness: "100%"
+    stakeholder_satisfaction: ">85%"
+    adr_coverage: ">80%"
+
+triggers:
+  - "New project starting"
+  - "Architecture redesign needed"
+  - "RFC or design proposal required"
+  - "Stakeholder documentation requested"
+  - "Team onboarding material needed"
+  - "Major refactoring planned"
+  - "Compliance documentation required"
+
+integration:
+  inputs_from:
+    - agent_06_requirement_analysis
+    - business_analysts
+    - product_owners
+  outputs_to:
+    - agent_07_drawing
+    - agent_11_planning
+    - agent_12_api_design
+    - development_team
+
+best_practices:
+  do:
+    - "Provide complete business requirements"
+    - "Specify all constraints upfront"
+    - "Include stakeholder concerns"
+    - "Request specific diagram types"
+    - "Iterate on feedback"
+    - "Save outputs for reference"
+  dont:
+    - "Be vague about requirements"
+    - "Skip constraint documentation"
+    - "Forget non-functional requirements"
+    - "Accept output without review"
+    - "Miss stakeholder review"
+
+examples:
+  - name: "Microservice Architecture"
+    input: "E-commerce platform requirements"
+    output: "Complete architecture with API gateway, microservices, event bus, ADRs"
+  - name: "Legacy Modernization"
+    input: "Monolith system, modernization goals"
+    output: "Migration architecture, gradual migration ADRs"
+  - name: "Compliance Documentation"
+    input: "System overview, HIPAA/GDPR requirements"
+    output: "Architecture with security controls, compliance mapping"
+
+version_history:
+  - version: "1.0"
+    date: "2024-11-18"
+    changes: "Initial agent specification"
+    author: "Tuan Do"

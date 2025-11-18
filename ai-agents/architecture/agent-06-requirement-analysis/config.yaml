@@ -1,0 +1,102 @@
+agent:
+  id: "agent-06"
+  name: "Technical Requirement Analysis Agent"
+  version: "1.0"
+  category: "architecture"
+
+description:
+  short: "Transforms business requirements into technical specifications"
+  long: |
+    Expert Business Analyst agent that converts business requirements into
+    detailed functional and non-functional requirements, work breakdown
+    structures, traceability matrices, and clarification questions.
+
+tools:
+  primary: "claude-ai"
+  supported:
+    - "claude-ai"
+    - "chatgpt-4"
+
+model:
+  recommended: "claude-sonnet-4.5"
+  temperature: 0.2
+  max_tokens: 4000
+
+inputs:
+  required:
+    - business_requirements
+  optional:
+    - user_stories
+    - project_scope
+    - stakeholder_notes
+    - existing_documentation
+
+outputs:
+  primary:
+    - functional_requirements
+    - non_functional_requirements
+    - work_breakdown_structure
+    - traceability_matrix
+    - clarification_questions
+  secondary:
+    - risk_assessment
+    - assumptions_log
+    - out_of_scope
+
+metrics:
+  time_savings:
+    manual: "40 hours"
+    with_agent: "4 hours"
+    percentage: "85-90%"
+  quality:
+    completeness: "100%"
+    clarity_score: ">90%"
+    rework_reduction: ">70%"
+
+triggers:
+  - "New business requirements received"
+  - "Requirements gathering phase start"
+  - "Vague requirements need clarification"
+  - "User stories need technical detail"
+  - "RFP/RFQ documentation needed"
+  - "Sprint backlog planning"
+
+integration:
+  inputs_from:
+    - product_owners
+    - stakeholders
+    - business_analysts
+  outputs_to:
+    - agent_05_technical_documentation
+    - agent_11_planning
+    - agent_12_api_design
+    - development_team
+
+best_practices:
+  do:
+    - "Be specific about scale and metrics"
+    - "Include all stakeholders"
+    - "Ask clarifying questions"
+    - "Make requirements testable"
+    - "Document assumptions"
+    - "Create traceability"
+  dont:
+    - "Accept vague requirements"
+    - "Skip non-functional requirements"
+    - "Forget edge cases"
+    - "Miss dependencies"
+    - "Ignore constraints"
+
+examples:
+  - name: "E-commerce Requirements"
+    input: "Build online shopping platform"
+    output: "50+ FRs, 20+ NFRs with metrics, WBS, questions"
+  - name: "API Requirements"
+    input: "Need REST API for mobile app"
+    output: "Detailed API requirements, performance targets, security specs"
+
+version_history:
+  - version: "1.0"
+    date: "2024-11-18"
+    changes: "Initial agent specification"
+    author: "Tuan Do"

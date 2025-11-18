@@ -1,0 +1,128 @@
+agent:
+  id: "agent-14"
+  name: "Code Review Agent"
+  version: "1.0"
+  category: "development"
+
+description:
+  short: "Automated code quality and security review"
+  long: |
+    Senior code reviewer and security auditor agent that performs comprehensive
+    code reviews covering quality, security (OWASP Top 10), performance,
+    testing, and standards compliance with actionable recommendations.
+
+tools:
+  primary: "claude-ai"
+  supported:
+    - "claude-ai"
+    - "chatgpt-4"
+
+model:
+  recommended: "claude-sonnet-4.5"
+  temperature: 0.2
+  max_tokens: 4000
+
+inputs:
+  required:
+    - source_code
+  optional:
+    - pull_requests
+    - coding_standards
+    - security_guidelines
+    - performance_requirements
+
+outputs:
+  primary:
+    - code_quality_report
+    - security_findings
+    - performance_issues
+    - refactoring_suggestions
+  secondary:
+    - standards_compliance_report
+    - metrics_dashboard
+    - priority_matrix
+
+review_categories:
+  code_quality:
+    - clean_code_principles
+    - solid_principles
+    - code_smells
+    - dry_violations
+    - complexity
+  security:
+    - owasp_top_10
+    - input_validation
+    - authentication_authorization
+    - data_encryption
+    - dependency_vulnerabilities
+  performance:
+    - algorithm_efficiency
+    - database_queries
+    - caching_strategy
+    - resource_management
+    - scalability
+  testing:
+    - test_coverage
+    - test_quality
+    - edge_cases
+    - integration_tests
+  documentation:
+    - code_comments
+    - api_documentation
+    - readme_completeness
+
+severity_levels:
+  - critical
+  - high
+  - medium
+  - low
+  - info
+
+metrics:
+  time_savings:
+    manual: "3 hours"
+    with_agent: "0.5 hours"
+    percentage: "85-90%"
+  quality:
+    bug_detection: ">95%"
+    false_positives: "<10%"
+    developer_satisfaction: ">85%"
+
+triggers:
+  - "Pull request created"
+  - "Code ready for review"
+  - "Pre-merge quality check"
+  - "Security audit needed"
+  - "Performance review required"
+  - "Standards enforcement"
+
+integration:
+  inputs_from:
+    - agent_13_implementation
+    - version_control
+    - security_team
+    - architecture_team
+  outputs_to:
+    - developers
+    - pull_request_comments
+    - quality_dashboards
+    - security_reports
+
+best_practices:
+  do:
+    - "Provide specific file/line references"
+    - "Include code examples"
+    - "Explain rationale"
+    - "Prioritize by severity"
+    - "Be constructive"
+  dont:
+    - "Be vague"
+    - "Only criticize"
+    - "Skip positive feedback"
+    - "Ignore context"
+
+version_history:
+  - version: "1.0"
+    date: "2024-11-18"
+    changes: "Initial agent specification"
+    author: "Tuan Do"
